@@ -6,10 +6,18 @@ GRASS_RELEASE=8.2.1
 PCL_RELEASE=1.11.1
 TANGIBLE_RELEASE=1.2.2
 RINKINECT_RELEASE=2.1.0
+# Make sure not to use all the cores of your CPU
 NCORES=2
 CDIR=`pwd`
 
 sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
+
+# Updating system
+sudo apt update && sudo apt upgrade -y
+
+# Making sure python3 is default
+sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+
 # package dependencies
 sudo apt-get update && sudo apt install  \
    build-essential cmake curl pkg-config git wget\
@@ -17,12 +25,15 @@ sudo apt-get update && sudo apt install  \
    libboost-all-dev libeigen3-dev libflann-dev libopencv-dev \
    flex make bison gcc libgcc-s1 g++ ccache \
    python3-dateutil libgsl-dev \
+   wx3.0-headers wx-common libwxgtk3.0-gtk3-dev \
+   python3 python3-dev python3-pip
    python3-numpy python3-pil python3-matplotlib python3-watchdog \
    python3-wxgtk4.0 python3-wxgtk-webview4.0 python3-pip \
    python-is-python3 \
+   libwxbase3.0-dev   \
    libncurses-dev \
    zlib1g-dev gettext \
-   libtiff-dev libpnglite-dev \
+   libtiff5-dev libpnglite-dev \
    libcairo2 libcairo2-dev \
    sqlite3 libsqlite3-dev \
    libpq-dev \
