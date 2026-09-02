@@ -15,19 +15,21 @@ services:
           devices:
             - driver: nvidia
               count: all
-              capabilities: [gpu]
+              capabilities: [gpu, video, graphics, utility]
     environment:
       GRASS_RELEASE: "${GRASS_RELEASE:-8.5.0}"
       PCL_RELEASE: "${PCL_RELEASE:-1.15.1}"
       ORBBEC_SDK_VERSION: "${ORBBEC_SDK_VERSION:-2.8.6}"
       NCORES: "${NCORES:-4}"
       DISPLAY: "${DISPLAY:-}"
+      XR_RUNTIME_JSON: "etc/openxr/1/active_runtime.json"
     devices:
       - "/dev/bus/usb:/dev/bus/usb"
     device_cgroup_rules:
       - "c 189:* rmw"
     volumes:
       - "/tmp/.X11-unix:/tmp/.X11-unix:rw"
+      - "/run/user/1000/pipewire-0:/run/user/1000/pipewire-0"
     ipc: host
     working_dir: /workspace
     stdin_open: true

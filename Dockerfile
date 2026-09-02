@@ -28,6 +28,7 @@ RUN apt-get update \
         curl \
         cmake \
         build-essential \
+		dbus \
 		pkg-config \
 		git \
 		wget \
@@ -53,6 +54,8 @@ RUN apt-get update \
 		libcanberra-gtk3-module \
 		libcanberra-gtk-module \
 		fonts-dejavu \
+		avahi-daemon \
+		avahi-utils \
 		libboost-all-dev libeigen3-dev libflann-dev libopencv-dev \
 		python3-dateutil libgsl-dev python3-numpy python3-pil python3-matplotlib \
 		python3-watchdog python3-wxgtk4.0 python3-wxgtk-webview4.0 python3-pip \
@@ -65,6 +68,11 @@ RUN apt-get update \
 		libproj-dev proj-data proj-bin libgeos-dev libgdal-dev python3-gdal gdal-bin \
 		libzstd-dev libpdal-dev libsdl2-dev libsvm-dev liblapacke-dev liblapack-dev \
 		udev usbutils \
+	&& rm -rf /var/lib/apt/lists/*
+
+RUN add-apt-repository -y ppa:lvra/wivrn \
+	&& apt-get update \
+	&& apt-get install -y wivrn-dashboard wivrn-server \
 	&& rm -rf /var/lib/apt/lists/*
 
 RUN curl -sL https://download.blender.org/release/Blender${BLENDER_VERSION%.*}/blender-${BLENDER_VERSION}-linux-x64.tar.xz -o blender.tar.xz \
@@ -128,6 +136,9 @@ WORKDIR /workspace
 
 # Setting up the Blender environment in the container
 RUN mkdir -p /workspace/Watch
+
+COPY entrypoint.sh ./
+ENTRYPOINT ["./entrypoint.sh"]
 
 CMD ["/bin/bash"]
 
