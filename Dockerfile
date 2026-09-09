@@ -119,6 +119,8 @@ RUN git clone --branch femto-bolt --depth 1 https://github.com/tangible-landscap
 		g.extension -s extension=g.gui.tangible url=/tmp/tangible-landscape-build/grass-tangible-landscape \
 	&& rm -rf r.in.kinect grass-tangible-landscape
 
+RUN git clone --branch master --depth 1 https://github.com/tangible-landscape/tangible-landscape-applications.git
+
 RUN GRASS_VERSION_SHORT="$(printf '%s' "${GRASS_RELEASE}" | cut -d. -f1,2 | tr -d .)" \
 	&& printf '%s\n' \
 		'[Desktop Entry]' \
@@ -136,8 +138,10 @@ WORKDIR /workspace
 
 # Setting up the Blender environment in the container
 RUN mkdir -p /workspace/Watch
+RUN mkdir -p /workspace/activities/
 
 COPY entrypoint.sh ./
+COPY /tangible-landscape-applications/blender5/* /workspace/activities/
 ENTRYPOINT ["./entrypoint.sh"]
 
 CMD ["/bin/bash"]
