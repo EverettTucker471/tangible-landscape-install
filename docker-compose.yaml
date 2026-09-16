@@ -27,8 +27,10 @@ services:
       - "/dev/bus/usb:/dev/bus/usb"
     device_cgroup_rules:
       - "c 189:* rmw"
+    privileged: true
     volumes:
       - "/tmp/.X11-unix:/tmp/.X11-unix:rw"
+      - "/dev:/dev"
       - "/run/user/1000/pipewire-0:/run/user/1000/pipewire-0"
     ipc: host
     working_dir: /workspace

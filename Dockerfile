@@ -18,13 +18,14 @@ ENV DEBIAN_FRONTEND=${DEBIAN_FRONTEND} \
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Keep source trees out of the final image and make the build reproducible.
-WORKDIR /tmp/tangible-landscape-build
+WORKDIR /tmp/tangible-landscape-install
 
 RUN apt-get update \
 	&& apt-get install -y --no-install-recommends software-properties-common ca-certificates \
 	&& add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable \
 	&& apt-get update \
 	&& apt-get install -y --no-install-recommends \
+		zip \
         curl \
         cmake \
         build-essential \
@@ -70,16 +71,13 @@ RUN apt-get update \
 		udev usbutils \
 	&& rm -rf /var/lib/apt/lists/*
 
-RUN add-apt-repository -y ppa:lvra/wivrn \
-	&& apt-get update \
-	&& apt-get install -y wivrn-dashboard wivrn-server \
-	&& rm -rf /var/lib/apt/lists/*
-
+# Installing Blender
 RUN curl -sL https://download.blender.org/release/Blender${BLENDER_VERSION%.*}/blender-${BLENDER_VERSION}-linux-x64.tar.xz -o blender.tar.xz \
     && tar -xf blender.tar.xz -C /opt \
     && rm blender.tar.xz \
     && ln -s /opt/blender-${BLENDER_VERSION}-linux-x64/blender /usr/local/bin/blender
 
+# Backup wxPython installation
 RUN python3 -m pip install --break-system-packages --no-cache-dir -U \
 		-f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04 wxPython
 
@@ -90,6 +88,7 @@ RUN wget -q --show-progress \
 	&& rm -f "OrbbecSDK_v${ORBBEC_SDK_VERSION}_amd64.deb" \
 	&& ldconfig
 
+# Installing and building PCL from source
 RUN wget -q --show-progress \
 		"https://github.com/PointCloudLibrary/pcl/archive/pcl-${PCL_RELEASE}.tar.gz" \
 	&& tar -xzf "pcl-${PCL_RELEASE}.tar.gz" \
@@ -101,6 +100,7 @@ RUN wget -q --show-progress \
 	&& ldconfig \
 	&& rm -rf "pcl-pcl-${PCL_RELEASE}" pcl-build "pcl-${PCL_RELEASE}.tar.gz"
 
+# Installing and building GRASS from source
 RUN git clone --branch "${GRASS_RELEASE}" --depth 1 https://github.com/OSGeo/grass.git grass \
 	&& cmake -S grass -B grass-build \
 		-DCMAKE_BUILD_TYPE=Release \
@@ -111,37 +111,33 @@ RUN git clone --branch "${GRASS_RELEASE}" --depth 1 https://github.com/OSGeo/gra
 	&& cmake --install grass-build \
 	&& rm -rf grass grass-build
 
+# Installing the Orbbec Femto-Bolt sensor driver
 RUN git clone --branch femto-bolt --depth 1 https://github.com/tangible-landscape/r.in.kinect.git \
 	&& OrbbecSDK_DIR="${ORBBEC_SDK_DIR}" grass --tmp-project XY --exec \
-		g.extension -s extension=r.in.kinect url=/tmp/tangible-landscape-build/r.in.kinect \
+		g.extension -s extension=r.in.kinect url=/tmp/tangible-landscape-install/r.in.kinect \
 	&& git clone --branch master --depth 1 https://github.com/tangible-landscape/grass-tangible-landscape.git \
 	&& grass --tmp-project XY --exec \
-		g.extension -s extension=g.gui.tangible url=/tmp/tangible-landscape-build/grass-tangible-landscape \
+		g.extension -s extension=g.gui.tangible url=/tmp/tangible-landscape-install/grass-tangible-landscape \
 	&& rm -rf r.in.kinect grass-tangible-landscape
 
+# Installing Tangible Landscape Activities
 RUN git clone --branch master --depth 1 https://github.com/tangible-landscape/tangible-landscape-applications.git
 
-RUN GRASS_VERSION_SHORT="$(printf '%s' "${GRASS_RELEASE}" | cut -d. -f1,2 | tr -d .)" \
-	&& printf '%s\n' \
-		'[Desktop Entry]' \
-		'Version=1.0' \
-		'Name=GRASS' \
-		'Comment=Start GRASS' \
-		'Exec=/usr/local/bin/grass' \
-		"Icon=/usr/local/lib/grass${GRASS_VERSION_SHORT}/share/icons/hicolor/scalable/apps/grass.svg" \
-		'Terminal=true' \
-		'Type=Application' \
-		'Categories=GIS;Application;' \
-		> /usr/share/applications/grass.desktop
+# Installing the Tangible Landscape Plugin in Blender
+RUN git clone --branch main --depth 1 https://github.com/EverettTucker471/blender-tangible-landscape.git
 
+# Setting up workspace and GRASS activities
 WORKDIR /workspace
-
-# Setting up the Blender environment in the container
-RUN mkdir -p /workspace/Watch
 RUN mkdir -p /workspace/activities/
+RUN cp -r /tmp/tangible-landscape-install/tangible-landscape-applications/blender5/* /workspace/activities
 
+# Installing Tangible Landscape Plugin in Blender
+RUN chmod +x /tmp/tangible-landscape-install/blender-tangible-landscape/reload/install_addon_docker.sh
+RUN /tmp/tangible-landscape-install/blender-tangible-landscape/reload/install_addon_docker.sh
+
+# Entrypoint
 COPY entrypoint.sh ./
-COPY /tangible-landscape-applications/blender5/* /workspace/activities/
+RUN chmod +x ./entrypoint.sh
 ENTRYPOINT ["./entrypoint.sh"]
 
 CMD ["/bin/bash"]
