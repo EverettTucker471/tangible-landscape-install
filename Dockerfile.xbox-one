@@ -119,7 +119,6 @@ RUN git clone --depth 1 https://github.com/OpenKinect/libfreenect2.git \
    && ldconfig \
    && rm -rf libfreenect2 libfreenect2-build
 
-# TODO: Find a better way to change which sensor driver is installed
 # Installing the Xbox Kinect v2 sensor driver and Grass Tangible Landscape
 RUN git clone --branch xbox-one --depth 1 https://github.com/EverettTucker471/r.in.kinect \
 	&& grass --tmp-project XY --exec \
