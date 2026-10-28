@@ -41,6 +41,7 @@ RUN apt-get update \
 		xz-utils \
 		libusb-1.0-0-dev \
 		libturbojpeg0-dev \
+		libsoundio2 \
 		libsm6 \
 		libice6 \
 		libxext6 \
@@ -81,13 +82,6 @@ RUN curl -sL https://download.blender.org/release/Blender${BLENDER_VERSION%.*}/b
 RUN python3 -m pip install --break-system-packages --no-cache-dir -U \
 		-f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04 wxPython
 
-# Orbbec's package installs the SDK and its udev rules under /opt.
-RUN wget -q --show-progress \
-		"https://github.com/orbbec/OrbbecSDK_v2/releases/download/v${ORBBEC_SDK_VERSION}/OrbbecSDK_v${ORBBEC_SDK_VERSION}_amd64.deb" \
-	&& { dpkg -i "OrbbecSDK_v${ORBBEC_SDK_VERSION}_amd64.deb" || (apt-get update && apt-get install -f -y); } \
-	&& rm -f "OrbbecSDK_v${ORBBEC_SDK_VERSION}_amd64.deb" \
-	&& ldconfig
-
 # Installing and building PCL from source
 RUN wget -q --show-progress \
 		"https://github.com/PointCloudLibrary/pcl/archive/pcl-${PCL_RELEASE}.tar.gz" \
@@ -111,11 +105,25 @@ RUN git clone --branch "${GRASS_RELEASE}" --depth 1 https://github.com/OSGeo/gra
 	&& cmake --install grass-build \
 	&& rm -rf grass grass-build
 
-# Installing the Orbbec Femto-Bolt sensor driver
-RUN git clone --branch femto-bolt --depth 1 https://github.com/tangible-landscape/r.in.kinect.git \
-	&& OrbbecSDK_DIR="${ORBBEC_SDK_DIR}" grass --tmp-project XY --exec \
+# Installing the Xbox Kinect SDK
+RUN git clone --depth 1 https://github.com/OpenKinect/libfreenect2.git \
+   && cmake -S libfreenect2 -B libfreenect2-build \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_INSTALL_PREFIX=/usr/local \
+      -DENABLE_CUDA=OFF \
+      -DENABLE_OPENCL=OFF \
+      -DENABLE_OPENGL=ON \
+   && cmake --build libfreenect2-build --parallel ${NCORES} \
+   && cmake --install libfreenect2-build \
+   && ldconfig \
+   && rm -rf libfreenect2 libfreenect2-build
+
+# CHANGED: Find a better way to change which sensor driver is installed
+# Installing the Xbox Kinect K4A sensor driver and Grass Tangible Landscape
+RUN git clone --branch xbox-one --depth 1 https://github.com/EverettTucker471/r.in.kinect \
+	&& grass --tmp-project XY --exec \
 		g.extension -s extension=r.in.kinect url=/tmp/tangible-landscape-install/r.in.kinect \
-	&& git clone --branch master --depth 1 https://github.com/tangible-landscape/grass-tangible-landscape.git \
+	&& git clone --branch master --depth 1 https://github.com/EverettTucker471/grass-tangible-landscape.git \
 	&& grass --tmp-project XY --exec \
 		g.extension -s extension=g.gui.tangible url=/tmp/tangible-landscape-install/grass-tangible-landscape \
 	&& rm -rf r.in.kinect grass-tangible-landscape

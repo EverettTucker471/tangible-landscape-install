@@ -16,6 +16,8 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu, video, graphics, utility]
+        limits:
+          memory: 16G
     environment:
       GRASS_RELEASE: "${GRASS_RELEASE:-8.5.0}"
       PCL_RELEASE: "${PCL_RELEASE:-1.15.1}"
