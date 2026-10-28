@@ -115,11 +115,12 @@ RUN git clone --depth 1 https://github.com/OpenKinect/libfreenect2.git \
       -DENABLE_OPENGL=ON \
    && cmake --build libfreenect2-build --parallel ${NCORES} \
    && cmake --install libfreenect2-build \
+   && cp libfreenect2-build/bin/Protonect /usr/local/bin/Protonect \
    && ldconfig \
    && rm -rf libfreenect2 libfreenect2-build
 
-# CHANGED: Find a better way to change which sensor driver is installed
-# Installing the Xbox Kinect K4A sensor driver and Grass Tangible Landscape
+# TODO: Find a better way to change which sensor driver is installed
+# Installing the Xbox Kinect v2 sensor driver and Grass Tangible Landscape
 RUN git clone --branch xbox-one --depth 1 https://github.com/EverettTucker471/r.in.kinect \
 	&& grass --tmp-project XY --exec \
 		g.extension -s extension=r.in.kinect url=/tmp/tangible-landscape-install/r.in.kinect \
